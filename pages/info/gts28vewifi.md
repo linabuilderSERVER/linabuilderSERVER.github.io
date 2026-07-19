@@ -1,0 +1,8 @@
+---
+sidebar: home_sidebar
+title: Info about gts28vewifi
+layout: deviceinfo
+permalink: /devices/gts28vewifi/
+device: gts28vewifi
+---
+{% include templates/device_info.md %}

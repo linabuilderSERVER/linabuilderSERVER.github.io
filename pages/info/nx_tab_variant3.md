@@ -1,0 +1,8 @@
+---
+sidebar: home_sidebar
+title: Info about nx_tab
+layout: deviceinfo
+permalink: /devices/nx_tab/variant3/
+device: nx_tab_variant3
+---
+{% include templates/device_info.md %}

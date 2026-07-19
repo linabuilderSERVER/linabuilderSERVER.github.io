@@ -1,0 +1,57 @@
+## Forcibly unlocking the bootloader
+
+This generation of Amlogic device includes a unique boot mode called "Burn Mode", which we will be utilizing to forcibly unlock the device's bootloader.
+`aml-flash-tool` is Radxa's wrapper script for Amlogic's official `update` tool, which allows interfacing with burn mode. It's only available for Linux, though a VM will suffice.
+
+{% include alerts/warning.html content="Please note that both `aml-flash-tool` and `update` are known to be somewhat finicky on specific host platforms (e.g. AMD machines). If you encounter any failures while flashing, return to step 2 and try again." %}
+
+ 1. Run the following command to ascertain the device's current bootloader lock state:
+ ```
+ fastboot getvar unlocked
+ ```
+ 2. If your device reports `unlocked: yes`, scroll to the end of this step, and proceed to the next step labeled "Flashing the dtb and dtbo partitions".
+ 3. If your device reports `unlocked: no`, power off the device, and boot it into burn mode by holding the side-button on the device while connecting the device to USB on your host machine, as well as power if your device has a dedicated DC barrel jack. If your device shows a "Fastboot" screen when long pressing the side-button, continue holding the button, do not release it. If you released the button early, power-cycle and unplug the device from USB/Power, then repeat this step while holding the side-button even after "Fastboot" appears on screen.
+ 4. Run the following commands on your host machine:
+ ```
+ wget https://github.com/khadas/utils/raw/master/aml-flash-tool/tools/linux-x86/update
+ chmod +x update
+ sudo ./update bulkcmd "setenv lock 10100000"
+ sudo ./update bulkcmd "saveenv"
+ sudo ./update bulkcmd "reboot bootloader"
+ rm ./update
+ ```
+ The output should look similar to the following:
+ ```
+ AmlUsbBulkCmd[setenv lock 10101000]
+ [AmlUsbRom]Inf:bulkInReply success
+ AmlUsbBulkCmd[saveenv]
+ [AmlUsbRom]Inf:bulkInReply success
+ AmlUsbBulkCmd[reboot bootloader]
+ [AmlUsbRom]Err:return len=0 < strLenBusy 11
+ [AmlUsbRom]Inf:bulkInReply
+ ERR: AmlUsbBulkCmd failed!
+ ```
+    {% include alerts/note.html content="Please note that the failure of the final command is expected, and your device should now be booted into fastboot mode." %}
+ 5. Re-run the following command to ascertain the device's current bootloader lock state:
+ ```
+ fastboot getvar unlocked
+ ```
+ {% include alerts/warning.html content="Please only proceed if the status returns are `unlocked: yes`, if for some reason at this point it does not, please re-run the above to confirm it ran successfully, if it looks to have succeeded but reports `unlocked: no`, your device likely is not bootloader unlockable and you cannot run LineageOS." %}
+
+## Flashing the dtb and dtbo partitions
+
+ {% include alerts/warning.html content="This platform requires the dtb and dtbo partitions to be flashed for recovery to work properly, the process to do so is described below." %}
+
+ 1. Download dtb.img and dtbo.img file from [here](https://download.lineageos.org/devices/{{ device.codename }}).
+ 2. Reboot the device into bootloader mode:
+     * {{ device.download_boot }}
+ 3. Flash the downloaded image files to your device by running:
+ ```
+ fastboot flash dtb dtb.img
+ fastboot flash dtbo dtbo.img
+ ```
+4. Reboot to bootloader mode:
+```
+fastboot reboot bootloader
+```
+{% include alerts/note.html content="Please note that most devices will be able to navigate in recovery mode by pressing the <kbd>Side Button</kbd> to cycle through the on-screen options, and long-pressing the <kbd>Side Button</kbd> to select an option. However, if your device has a remote that communicates via Infrared (IR), the on-device button may not function correctly to change selection/select items in the recovery menu. If you hit this, please try utilizing your IR remote's <kbd>DPAD Keys</kbd> to change selection, and the <kbd>Power Button</kbd> to select an item." %}
